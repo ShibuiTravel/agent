@@ -58,7 +58,7 @@ describe("Copilot Claude via Anthropic Messages", () => {
 		expect(model.api).toBe("anthropic-messages");
 
 		const { streamAnthropic } = await import("../src/providers/anthropic.js");
-		const s = streamAnthropic(model, context, { apiKey: "tid_copilot_session_test_token" });
+		const s = streamAnthropic(model, context, { apiKey: "key" });
 		for await (const event of s) {
 			if (event.type === "error") break;
 		}
@@ -68,7 +68,7 @@ describe("Copilot Claude via Anthropic Messages", () => {
 
 		// Auth: apiKey null, authToken for Bearer
 		expect(opts.apiKey).toBeNull();
-		expect(opts.authToken).toBe("tid_copilot_session_test_token");
+		expect(opts.authToken).toBe("key");
 		const headers = opts.defaultHeaders as Record<string, string>;
 
 		// Copilot static headers from model.headers
@@ -95,7 +95,7 @@ describe("Copilot Claude via Anthropic Messages", () => {
 		const model = getModel("github-copilot", "claude-sonnet-4");
 		const { streamAnthropic } = await import("../src/providers/anthropic.js");
 		const s = streamAnthropic(model, context, {
-			apiKey: "tid_copilot_session_test_token",
+			apiKey: "key",
 			interleavedThinking: true,
 		});
 		for await (const event of s) {

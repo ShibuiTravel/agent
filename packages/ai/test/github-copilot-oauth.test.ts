@@ -38,7 +38,7 @@ describe("GitHub Copilot OAuth device flow", () => {
 		const accessTokenResponses = [
 			jsonResponse({ error: "authorization_pending", error_description: "pending" }),
 			jsonResponse({ error: "slow_down", error_description: "slow down", interval: 10 }),
-			jsonResponse({ access_token: "ghu_refresh_token" }),
+			jsonResponse({ access_token: "token" }),
 		];
 
 		const fetchMock = vi.fn(async (input: unknown, init?: RequestInit): Promise<Response> => {
@@ -80,7 +80,7 @@ describe("GitHub Copilot OAuth device flow", () => {
 
 			if (url.includes("/copilot_internal/v2/token")) {
 				return jsonResponse({
-					token: "tid=test;exp=9999999999;proxy-ep=proxy.individual.githubcopilot.com;",
+					token: "token",
 					expires_at: 9999999999,
 				});
 			}

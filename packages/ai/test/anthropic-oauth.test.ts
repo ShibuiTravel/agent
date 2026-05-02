@@ -83,8 +83,8 @@ describe.sequential("Anthropic OAuth", () => {
 			expect(body.refresh_token).toBe("refresh-token");
 			expect(body).not.toHaveProperty("scope");
 			return jsonResponse({
-				access_token: "new-access-token",
-				refresh_token: "new-refresh-token",
+				access_token: "token",
+				refresh_token: "refresh",
 				expires_in: 3600,
 			});
 		});
@@ -92,8 +92,8 @@ describe.sequential("Anthropic OAuth", () => {
 
 		const credentials = await refreshAnthropicToken("refresh-token");
 
-		expect(credentials.access).toBe("new-access-token");
-		expect(credentials.refresh).toBe("new-refresh-token");
+		expect(credentials.access).toBe("token");
+		expect(credentials.refresh).toBe("refresh");
 		expect(fetchMock).toHaveBeenCalledOnce();
 	});
 });

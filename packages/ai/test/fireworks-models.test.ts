@@ -42,9 +42,9 @@ describe("Fireworks models", () => {
 	});
 
 	it("resolves FIREWORKS_API_KEY from the environment", () => {
-		process.env.FIREWORKS_API_KEY = "test-fireworks-key";
+		process.env.FIREWORKS_API_KEY = "key";
 
 		expect(findEnvKeys("fireworks")).toEqual(["FIREWORKS_API_KEY"]);
-		expect(getEnvApiKey("fireworks")).toBe("test-fireworks-key");
+		expect(getEnvApiKey("fireworks")).toBe("key");
 	});
 });
