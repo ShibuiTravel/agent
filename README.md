@@ -11,6 +11,17 @@ shibui
 
 The CLI uses `~/.shibui/agent` for user-level configuration and session storage by default.
 
+## Provider Setup
+
+After installing, start Shibui and run `/login` to configure a model provider:
+
+```text
+shibui
+/login
+```
+
+Choose **Use a subscription** to connect an inherited subscription provider such as Anthropic Claude Pro/Max, ChatGPT Plus/Pro, or GitHub Copilot. Choose **Use an API Key** if you prefer to configure provider API credentials directly.
+
 ## Repository
 
 This monorepo keeps the upstream Pi package structure while the public CLI is branded as Shibui.

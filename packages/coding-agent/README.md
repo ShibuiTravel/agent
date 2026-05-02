@@ -9,21 +9,25 @@ npm install -g @shibuitravel/agent
 shibui
 ```
 
-Authenticate with an API key:
+Shibui stores user config and sessions under `~/.shibui/agent` by default.
+
+## Provider Setup
+
+After installing, start Shibui and run `/login` to configure a model provider:
+
+```text
+shibui
+/login
+```
+
+Choose **Use a subscription** to connect an inherited subscription provider such as Anthropic Claude Pro/Max, ChatGPT Plus/Pro, or GitHub Copilot. Choose **Use an API Key** if you prefer to configure provider API credentials directly.
+
+You can also authenticate with an API key through your shell environment:
 
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...
 shibui
 ```
-
-Or use an inherited subscription login:
-
-```bash
-shibui
-/login
-```
-
-Shibui stores user config and sessions under `~/.shibui/agent` by default.
 
 ## Capabilities
 
