@@ -5,19 +5,20 @@ See [AGENTS.md](../../../AGENTS.md) for additional guidelines.
 ## Setup
 
 ```bash
-git clone https://github.com/badlogic/pi-mono
-cd pi-mono
+git clone https://github.com/ShibuiTravel/agent
+cd agent
 npm install
-npm run build
+npm run check
 ```
 
 Run from source:
 
 ```bash
-/path/to/pi-mono/pi-test.sh
+npm --prefix packages/coding-agent run build
+node packages/coding-agent/dist/cli.js
 ```
 
-The script can be run from any directory. Pi keeps the caller's current working directory.
+Shibui keeps the caller's current working directory.
 
 ## Forking / Rebranding
 
@@ -26,8 +27,8 @@ Configure via `package.json`:
 ```json
 {
   "piConfig": {
-    "name": "pi",
-    "configDir": ".pi"
+    "name": "shibui",
+    "configDir": ".shibui"
   }
 }
 ```
@@ -48,7 +49,7 @@ Never use `__dirname` directly for package assets.
 
 ## Debug Command
 
-`/debug` (hidden) writes to `~/.pi/agent/pi-debug.log`:
+`/debug` (hidden) writes to `~/.shibui/agent/shibui-debug.log`:
 - Rendered TUI lines with ANSI codes
 - Last messages sent to the LLM
 

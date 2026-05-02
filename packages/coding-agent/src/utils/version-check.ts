@@ -1,6 +1,7 @@
+import { ENV_OFFLINE, ENV_SKIP_VERSION_CHECK, LEGACY_ENV_OFFLINE, LEGACY_ENV_SKIP_VERSION_CHECK } from "../config.js";
 import { getPiUserAgent } from "./pi-user-agent.js";
 
-const LATEST_VERSION_URL = "https://pi.dev/api/latest-version";
+const LATEST_VERSION_URL = "https://api.shibui.travel/agent/latest-version";
 const DEFAULT_VERSION_CHECK_TIMEOUT_MS = 10000;
 
 interface ParsedVersion {
@@ -51,7 +52,14 @@ export async function getLatestPiVersion(
 	currentVersion: string,
 	options: { timeoutMs?: number } = {},
 ): Promise<string | undefined> {
-	if (process.env.PI_SKIP_VERSION_CHECK || process.env.PI_OFFLINE) return undefined;
+	if (
+		process.env[ENV_SKIP_VERSION_CHECK] ||
+		process.env[ENV_OFFLINE] ||
+		process.env[LEGACY_ENV_SKIP_VERSION_CHECK] ||
+		process.env[LEGACY_ENV_OFFLINE]
+	) {
+		return undefined;
+	}
 
 	const response = await fetch(LATEST_VERSION_URL, {
 		headers: {

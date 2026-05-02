@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Rebranded the coding-agent CLI package for Shibui with the `shibui` binary, `@shibuitravel/agent` package name, and `~/.shibui/agent` config root.
+
 ## [0.72.0] - 2026-05-01
 
 ### New Features

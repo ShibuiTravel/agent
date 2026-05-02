@@ -15,7 +15,19 @@ import { processFileArguments } from "./cli/file-processor.js";
 import { buildInitialMessage } from "./cli/initial-message.js";
 import { listModels } from "./cli/list-models.js";
 import { selectSession } from "./cli/session-picker.js";
-import { ENV_SESSION_DIR, expandTildePath, getAgentDir, VERSION } from "./config.js";
+import {
+	ENV_OFFLINE,
+	ENV_SESSION_DIR,
+	ENV_SKIP_VERSION_CHECK,
+	ENV_STARTUP_BENCHMARK,
+	expandTildePath,
+	getAgentDir,
+	LEGACY_ENV_OFFLINE,
+	LEGACY_ENV_SESSION_DIR,
+	LEGACY_ENV_SKIP_VERSION_CHECK,
+	LEGACY_ENV_STARTUP_BENCHMARK,
+	VERSION,
+} from "./config.js";
 import { type CreateAgentSessionRuntimeFactory, createAgentSessionRuntime } from "./core/agent-session-runtime.js";
 import {
 	type AgentSessionRuntimeDiagnostic,
@@ -422,10 +434,15 @@ export interface MainOptions {
 
 export async function main(args: string[], options?: MainOptions) {
 	resetTimings();
-	const offlineMode = args.includes("--offline") || isTruthyEnvFlag(process.env.PI_OFFLINE);
+	const offlineMode =
+		args.includes("--offline") ||
+		isTruthyEnvFlag(process.env[ENV_OFFLINE]) ||
+		isTruthyEnvFlag(process.env[LEGACY_ENV_OFFLINE]);
 	if (offlineMode) {
-		process.env.PI_OFFLINE = "1";
-		process.env.PI_SKIP_VERSION_CHECK = "1";
+		process.env[ENV_OFFLINE] = "1";
+		process.env[ENV_SKIP_VERSION_CHECK] = "1";
+		process.env[LEGACY_ENV_OFFLINE] = "1";
+		process.env[LEGACY_ENV_SKIP_VERSION_CHECK] = "1";
 	}
 
 	if (await handlePackageCommand(args)) {
@@ -493,7 +510,7 @@ export async function main(args: string[], options?: MainOptions) {
 	// settings, resources, provider registrations, and models must be resolved only after
 	// the target session cwd is known. The startup-cwd settings manager is used only for
 	// sessionDir lookup during session selection.
-	const envSessionDir = process.env[ENV_SESSION_DIR];
+	const envSessionDir = process.env[ENV_SESSION_DIR] || process.env[LEGACY_ENV_SESSION_DIR];
 	const sessionDir =
 		parsed.sessionDir ??
 		(envSessionDir ? expandTildePath(envSessionDir) : undefined) ??
@@ -664,9 +681,10 @@ export async function main(args: string[], options?: MainOptions) {
 		process.exit(1);
 	}
 
-	const startupBenchmark = isTruthyEnvFlag(process.env.PI_STARTUP_BENCHMARK);
+	const startupBenchmark =
+		isTruthyEnvFlag(process.env[ENV_STARTUP_BENCHMARK]) || isTruthyEnvFlag(process.env[LEGACY_ENV_STARTUP_BENCHMARK]);
 	if (startupBenchmark && appMode !== "interactive") {
-		console.error(chalk.red("Error: PI_STARTUP_BENCHMARK only supports interactive mode"));
+		console.error(chalk.red(`Error: ${ENV_STARTUP_BENCHMARK} only supports interactive mode`));
 		process.exit(1);
 	}
 

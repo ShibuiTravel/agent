@@ -21,9 +21,9 @@ import * as _bundledPiTui from "@mariozechner/pi-tui";
 import * as _bundledTypebox from "typebox";
 import * as _bundledTypeboxCompile from "typebox/compile";
 import * as _bundledTypeboxValue from "typebox/value";
-import { CONFIG_DIR_NAME, getAgentDir, isBunBinary } from "../../config.js";
+import { CONFIG_DIR_NAME, getAgentDir, isBunBinary, PACKAGE_NAME } from "../../config.js";
 // NOTE: This import works because loader.ts exports are NOT re-exported from index.ts,
-// avoiding a circular dependency. Extensions can import from @mariozechner/pi-coding-agent.
+// avoiding a circular dependency. Extensions can import from @shibuitravel/agent.
 import * as _bundledPiCodingAgent from "../../index.js";
 import { createEventBus, type EventBus } from "../event-bus.js";
 import type { ExecOptions } from "../exec.js";
@@ -53,6 +53,7 @@ const VIRTUAL_MODULES: Record<string, unknown> = {
 	"@mariozechner/pi-tui": _bundledPiTui,
 	"@mariozechner/pi-ai": _bundledPiAi,
 	"@mariozechner/pi-ai/oauth": _bundledPiAiOauth,
+	[PACKAGE_NAME]: _bundledPiCodingAgent,
 	"@mariozechner/pi-coding-agent": _bundledPiCodingAgent,
 };
 
@@ -84,6 +85,7 @@ function getAliases(): Record<string, string> {
 	};
 
 	_aliases = {
+		[PACKAGE_NAME]: packageIndex,
 		"@mariozechner/pi-coding-agent": packageIndex,
 		"@mariozechner/pi-agent-core": resolveWorkspaceOrImport("agent/dist/index.js", "@mariozechner/pi-agent-core"),
 		"@mariozechner/pi-tui": resolveWorkspaceOrImport("tui/dist/index.js", "@mariozechner/pi-tui"),

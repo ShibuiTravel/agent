@@ -5,6 +5,9 @@ import { basename, dirname, join, resolve, sep, win32 } from "path";
 import { fileURLToPath } from "url";
 import { shouldUseWindowsShell } from "./utils/child-process.js";
 
+export const ENV_PACKAGE_DIR = "SHIBUI_PACKAGE_DIR";
+export const LEGACY_ENV_PACKAGE_DIR = "PI_PACKAGE_DIR";
+
 // =============================================================================
 // Package Detection
 // =============================================================================
@@ -222,7 +225,7 @@ export function getSelfUpdateCommand(packageName: string, npmCommand?: string[])
 export function getSelfUpdateUnavailableInstruction(packageName: string, npmCommand?: string[]): string {
 	const method = detectInstallMethod();
 	if (method === "bun-binary") {
-		return `Download from: https://github.com/badlogic/pi-mono/releases/latest`;
+		return `Download from: https://github.com/ShibuiTravel/agent/releases/latest`;
 	}
 	const command = getSelfUpdateCommandForMethod(method, packageName, npmCommand);
 	if (command) {
@@ -255,7 +258,7 @@ export function getUpdateInstruction(packageName: string): string {
  */
 export function getPackageDir(): string {
 	// Allow override via environment variable (useful for Nix/Guix where store paths tokenize poorly)
-	const envDir = process.env.PI_PACKAGE_DIR;
+	const envDir = process.env[ENV_PACKAGE_DIR] || process.env[LEGACY_ENV_PACKAGE_DIR];
 	if (envDir) {
 		if (envDir === "~") return homedir();
 		if (envDir.startsWith("~/")) return homedir() + envDir.slice(1);
@@ -370,15 +373,30 @@ interface PackageJson {
 const pkg = JSON.parse(readFileSync(getPackageJsonPath(), "utf-8")) as PackageJson;
 
 const piConfigName: string | undefined = pkg.piConfig?.name;
-export const PACKAGE_NAME: string = pkg.name || "@mariozechner/pi-coding-agent";
+export const PACKAGE_NAME: string = pkg.name || "@shibuitravel/agent";
 export const APP_NAME: string = piConfigName || "pi";
 export const APP_TITLE: string = piConfigName ? APP_NAME : "π";
 export const CONFIG_DIR_NAME: string = pkg.piConfig?.configDir || ".pi";
 export const VERSION: string = pkg.version || "0.0.0";
 
-// e.g., PI_CODING_AGENT_DIR or TAU_CODING_AGENT_DIR
+// e.g., SHIBUI_CODING_AGENT_DIR
 export const ENV_AGENT_DIR = `${APP_NAME.toUpperCase()}_CODING_AGENT_DIR`;
 export const ENV_SESSION_DIR = `${APP_NAME.toUpperCase()}_CODING_AGENT_SESSION_DIR`;
+export const ENV_CODING_AGENT = `${APP_NAME.toUpperCase()}_CODING_AGENT`;
+export const ENV_OFFLINE = `${APP_NAME.toUpperCase()}_OFFLINE`;
+export const ENV_SHARE_VIEWER_URL = `${APP_NAME.toUpperCase()}_SHARE_VIEWER_URL`;
+export const ENV_SKIP_VERSION_CHECK = `${APP_NAME.toUpperCase()}_SKIP_VERSION_CHECK`;
+export const ENV_STARTUP_BENCHMARK = `${APP_NAME.toUpperCase()}_STARTUP_BENCHMARK`;
+export const ENV_TELEMETRY = `${APP_NAME.toUpperCase()}_TELEMETRY`;
+
+export const LEGACY_ENV_AGENT_DIR = "PI_CODING_AGENT_DIR";
+export const LEGACY_ENV_SESSION_DIR = "PI_CODING_AGENT_SESSION_DIR";
+export const LEGACY_ENV_CODING_AGENT = "PI_CODING_AGENT";
+export const LEGACY_ENV_OFFLINE = "PI_OFFLINE";
+export const LEGACY_ENV_SHARE_VIEWER_URL = "PI_SHARE_VIEWER_URL";
+export const LEGACY_ENV_SKIP_VERSION_CHECK = "PI_SKIP_VERSION_CHECK";
+export const LEGACY_ENV_STARTUP_BENCHMARK = "PI_STARTUP_BENCHMARK";
+export const LEGACY_ENV_TELEMETRY = "PI_TELEMETRY";
 
 export function expandTildePath(path: string): string {
 	if (path === "~") return homedir();
@@ -386,21 +404,22 @@ export function expandTildePath(path: string): string {
 	return path;
 }
 
-const DEFAULT_SHARE_VIEWER_URL = "https://pi.dev/session/";
+const DEFAULT_SHARE_VIEWER_URL = "https://shibui.travel/session/";
 
 /** Get the share viewer URL for a gist ID */
 export function getShareViewerUrl(gistId: string): string {
-	const baseUrl = process.env.PI_SHARE_VIEWER_URL || DEFAULT_SHARE_VIEWER_URL;
+	const baseUrl =
+		process.env[ENV_SHARE_VIEWER_URL] || process.env[LEGACY_ENV_SHARE_VIEWER_URL] || DEFAULT_SHARE_VIEWER_URL;
 	return `${baseUrl}#${gistId}`;
 }
 
 // =============================================================================
-// User Config Paths (~/.pi/agent/*)
+// User Config Paths (~/.shibui/agent/*)
 // =============================================================================
 
-/** Get the agent config directory (e.g., ~/.pi/agent/) */
+/** Get the agent config directory (e.g., ~/.shibui/agent/) */
 export function getAgentDir(): string {
-	const envDir = process.env[ENV_AGENT_DIR];
+	const envDir = process.env[ENV_AGENT_DIR] || process.env[LEGACY_ENV_AGENT_DIR];
 	if (envDir) {
 		return expandTildePath(envDir);
 	}

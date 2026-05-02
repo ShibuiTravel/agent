@@ -1,14 +1,14 @@
-> pi can help you create pi packages. Ask it to bundle your extensions, skills, prompt templates, or themes.
+> Shibui can help you create compatible packages. Ask it to bundle your extensions, skills, prompt templates, or themes.
 
-# Pi Packages
+# Packages
 
-Pi packages bundle extensions, skills, prompt templates, and themes so you can share them through npm or git. A package can declare resources in `package.json` under the `pi` key, or use conventional directories.
+Packages bundle extensions, skills, prompt templates, and themes so you can share them through npm or git. Shibui still reads the upstream-compatible `pi` manifest key in `package.json`, or conventional directories.
 
 ## Table of Contents
 
 - [Install and Manage](#install-and-manage)
 - [Package Sources](#package-sources)
-- [Creating a Pi Package](#creating-a-pi-package)
+- [Creating a Package](#creating-a-package)
 - [Package Structure](#package-structure)
 - [Dependencies](#dependencies)
 - [Package Filtering](#package-filtering)
@@ -17,37 +17,37 @@ Pi packages bundle extensions, skills, prompt templates, and themes so you can s
 
 ## Install and Manage
 
-> **Security:** Pi packages run with full system access. Extensions execute arbitrary code, and skills can instruct the model to perform any action including running executables. Review source code before installing third-party packages.
+> **Security:** Shibui packages run with full system access. Extensions execute arbitrary code, and skills can instruct the model to perform any action including running executables. Review source code before installing third-party packages.
 
 ```bash
-pi install npm:@foo/bar@1.0.0
-pi install git:github.com/user/repo@v1
-pi install https://github.com/user/repo  # raw URLs work too
-pi install /absolute/path/to/package
-pi install ./relative/path/to/package
+shibui install npm:@foo/bar@1.0.0
+shibui install git:github.com/user/repo@v1
+shibui install https://github.com/user/repo  # raw URLs work too
+shibui install /absolute/path/to/package
+shibui install ./relative/path/to/package
 
-pi remove npm:@foo/bar
-pi list                     # show installed packages from settings
-pi update                   # update pi and all non-pinned packages
-pi update --extensions      # update all non-pinned packages only
-pi update --self            # update pi only
-pi update --self --force    # reinstall pi even if current
-pi update npm:@foo/bar      # update one package
-pi update --extension npm:@foo/bar
+shibui remove npm:@foo/bar
+shibui list                     # show installed packages from settings
+shibui update                   # update Shibui and all non-pinned packages
+shibui update --extensions      # update all non-pinned packages only
+shibui update --self            # update Shibui only
+shibui update --self --force    # reinstall Shibui even if current
+shibui update npm:@foo/bar      # update one package
+shibui update --extension npm:@foo/bar
 ```
 
-By default, `install` and `remove` write to global settings (`~/.pi/agent/settings.json`). Use `-l` to write to project settings (`.pi/settings.json`) instead. Project settings can be shared with your team, and pi installs any missing packages automatically on startup.
+By default, `install` and `remove` write to global settings (`~/.shibui/agent/settings.json`). Use `-l` to write to project settings (`.shibui/settings.json`) instead. Project settings can be shared with your team, and Shibui installs any missing packages automatically on startup.
 
 To try a package without installing it, use `--extension` or `-e`. This installs to a temporary directory for the current run only:
 
 ```bash
-pi -e npm:@foo/bar
-pi -e git:github.com/user/repo
+shibui -e npm:@foo/bar
+shibui -e git:github.com/user/repo
 ```
 
 ## Package Sources
 
-Pi accepts three source types in settings and `pi install`.
+Shibui accepts three source types in settings and `shibui install`.
 
 ### npm
 
@@ -56,9 +56,9 @@ npm:@scope/pkg@1.2.3
 npm:pkg
 ```
 
-- Versioned specs are pinned and skipped by package updates (`pi update`, `pi update --extensions`).
+- Versioned specs are pinned and skipped by package updates (`shibui update`, `shibui update --extensions`).
 - Global installs use `npm install -g`.
-- Project installs go under `.pi/npm/`.
+- Project installs go under `.shibui/npm/`.
 - Set `npmCommand` in `settings.json` to pin npm package lookup and install operations to a specific wrapper command such as `mise` or `asdf`.
 
 Example:
@@ -83,20 +83,20 @@ ssh://git@github.com/user/repo@v1
 - HTTPS and SSH URLs are both supported.
 - SSH URLs use your configured SSH keys automatically (respects `~/.ssh/config`).
 - For non-interactive runs (for example CI), you can set `GIT_TERMINAL_PROMPT=0` to disable credential prompts and set `GIT_SSH_COMMAND` (for example `ssh -o BatchMode=yes -o ConnectTimeout=5`) to fail fast.
-- Refs pin the package and skip package updates (`pi update`, `pi update --extensions`).
-- Cloned to `~/.pi/agent/git/<host>/<path>` (global) or `.pi/git/<host>/<path>` (project).
+- Refs pin the package and skip package updates (`shibui update`, `shibui update --extensions`).
+- Cloned to `~/.shibui/agent/git/<host>/<path>` (global) or `.shibui/git/<host>/<path>` (project).
 - Runs `npm install` after clone or pull if `package.json` exists.
 
 **SSH examples:**
 ```bash
 # git@host:path shorthand (requires git: prefix)
-pi install git:git@github.com:user/repo
+shibui install git:git@github.com:user/repo
 
 # ssh:// protocol format
-pi install ssh://git@github.com/user/repo
+shibui install ssh://git@github.com/user/repo
 
 # With version ref
-pi install git:git@github.com:user/repo@v1.0.0
+shibui install git:git@github.com:user/repo@v1.0.0
 ```
 
 ### Local Paths
@@ -106,11 +106,11 @@ pi install git:git@github.com:user/repo@v1.0.0
 ./relative/path/to/package
 ```
 
-Local paths point to files or directories on disk and are added to settings without copying. Relative paths are resolved against the settings file they appear in. If the path is a file, it loads as a single extension. If it is a directory, pi loads resources using package rules.
+Local paths point to files or directories on disk and are added to settings without copying. Relative paths are resolved against the settings file they appear in. If the path is a file, it loads as a single extension. If it is a directory, Shibui loads resources using package rules.
 
-## Creating a Pi Package
+## Creating a Package
 
-Add a `pi` manifest to `package.json` or use conventional directories. Include the `pi-package` keyword for discoverability.
+Add a `pi` manifest to `package.json` or use conventional directories. Include the `pi-package` keyword for compatibility with the upstream package ecosystem.
 
 ```json
 {
@@ -129,7 +129,7 @@ Paths are relative to the package root. Arrays support glob patterns and `!exclu
 
 ### Gallery Metadata
 
-The [package gallery](https://pi.dev/packages) displays packages tagged with `pi-package`. Add `video` or `image` fields to show a preview:
+Upstream Pi package galleries display packages tagged with `pi-package`. Add `video` or `image` fields to show a preview:
 
 ```json
 {
@@ -152,7 +152,7 @@ If both are set, video takes precedence.
 
 ### Convention Directories
 
-If no `pi` manifest is present, pi auto-discovers resources from these directories:
+If no `pi` manifest is present, Shibui auto-discovers resources from these directories:
 
 - `extensions/` loads `.ts` and `.js` files
 - `skills/` recursively finds `SKILL.md` folders and loads top-level `.md` files as skills
@@ -161,23 +161,23 @@ If no `pi` manifest is present, pi auto-discovers resources from these directori
 
 ## Dependencies
 
-Third party runtime dependencies belong in `dependencies` in `package.json`. Dependencies that do not register extensions, skills, prompt templates, or themes also belong in `dependencies`. When pi installs a package from npm or git, it runs `npm install`, so those dependencies are installed automatically.
+Third party runtime dependencies belong in `dependencies` in `package.json`. Dependencies that do not register extensions, skills, prompt templates, or themes also belong in `dependencies`. When Shibui installs a package from npm or git, it runs `npm install`, so those dependencies are installed automatically.
 
-Pi bundles core packages for extensions and skills. If you import any of these, list them in `peerDependencies` with a `"*"` range and do not bundle them: `@mariozechner/pi-ai`, `@mariozechner/pi-agent-core`, `@mariozechner/pi-coding-agent`, `@mariozechner/pi-tui`, `typebox`.
+Shibui bundles core packages for extensions and skills. If you import any of these, list them in `peerDependencies` with a `"*"` range and do not bundle them: `@mariozechner/pi-ai`, `@mariozechner/pi-agent-core`, `@shibuitravel/agent`, `@mariozechner/pi-tui`, `typebox`.
 
-Other pi packages must be bundled in your tarball. Add them to `dependencies` and `bundledDependencies`, then reference their resources through `node_modules/` paths. Pi loads packages with separate module roots, so separate installs do not collide or share modules.
+Other packages must be bundled in your tarball. Add them to `dependencies` and `bundledDependencies`, then reference their resources through `node_modules/` paths. Shibui loads packages with separate module roots, so separate installs do not collide or share modules.
 
 Example:
 
 ```json
 {
   "dependencies": {
-    "shitty-extensions": "^1.0.1"
+    "example-extensions": "^1.0.1"
   },
-  "bundledDependencies": ["shitty-extensions"],
+  "bundledDependencies": ["example-extensions"],
   "pi": {
-    "extensions": ["extensions", "node_modules/shitty-extensions/extensions"],
-    "skills": ["skills", "node_modules/shitty-extensions/skills"]
+    "extensions": ["extensions", "node_modules/example-extensions/extensions"],
+    "skills": ["skills", "node_modules/example-extensions/skills"]
   }
 }
 ```
@@ -212,7 +212,7 @@ Filter what a package loads using the object form in settings:
 
 ## Enable and Disable Resources
 
-Use `pi config` to enable or disable extensions, skills, prompt templates, and themes from installed packages and local directories. Works for both global (`~/.pi/agent`) and project (`.pi/`) scopes.
+Use `shibui config` to enable or disable extensions, skills, prompt templates, and themes from installed packages and local directories. Works for both global (`~/.shibui/agent`) and project (`.shibui/`) scopes.
 
 ## Scope and Deduplication
 
