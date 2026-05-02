@@ -107,7 +107,9 @@ jobs:
 
       - name: Smoke test image
         run: |
-          test "$(docker run --rm -e SHIBUI_SKIP_VERSION_CHECK=1 shibui-agent:${{ steps.meta.outputs.version }} --version)" = "${{ steps.meta.outputs.version }}"
+          output=$(docker run --rm -e SHIBUI_SKIP_VERSION_CHECK=1 shibui-agent:${{ steps.meta.outputs.version }} --version 2>&1)
+          printf '%s\n' "$output"
+          test "$output" = "${{ steps.meta.outputs.version }}"
 
       - name: Build and push image
         uses: docker/build-push-action@v6
