@@ -1,24 +1,18 @@
 #!/usr/bin/env node
+
 /**
- * Release script for pi-mono
+ * Prepare a Shibui release commit and tag.
+ *
+ * This script does not publish packages, push git refs, or create GitHub
+ * releases. The release-shibui GitHub Actions workflow owns those steps.
  *
  * Usage:
- *   node scripts/release.mjs <major|minor|patch>
- *   node scripts/release.mjs <x.y.z>
- *
- * Steps:
- * 1. Check for uncommitted changes
- * 2. Bump version via npm run version:xxx or set an explicit version
- * 3. Update CHANGELOG.md files: [Unreleased] -> [version] - date
- * 4. Commit and tag
- * 5. Publish to npm
- * 6. Add new [Unreleased] section to changelogs
- * 7. Commit
+ *   node scripts/release.mjs <major|minor|patch|x.y.z>
  */
 
-import { execSync } from "child_process";
-import { readFileSync, writeFileSync, readdirSync, existsSync } from "fs";
-import { join } from "path";
+import { execSync } from "node:child_process";
+import { existsSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 
 const RELEASE_TARGET = process.argv[2];
 const BUMP_TYPES = new Set(["major", "minor", "patch"]);
@@ -33,7 +27,7 @@ function run(cmd, options = {}) {
 	console.log(`$ ${cmd}`);
 	try {
 		return execSync(cmd, { encoding: "utf-8", stdio: options.silent ? "pipe" : "inherit", ...options });
-	} catch (e) {
+	} catch (_err) {
 		if (!options.ignoreError) {
 			console.error(`Command failed: ${cmd}`);
 			process.exit(1);
@@ -43,7 +37,7 @@ function run(cmd, options = {}) {
 }
 
 function getVersion() {
-	const pkg = JSON.parse(readFileSync("packages/ai/package.json", "utf-8"));
+	const pkg = JSON.parse(readFileSync("packages/coding-agent/package.json", "utf-8"));
 	return pkg.version;
 }
 
@@ -53,9 +47,7 @@ function compareVersions(a, b) {
 
 	for (let i = 0; i < 3; i++) {
 		const diff = (aParts[i] || 0) - (bParts[i] || 0);
-		if (diff !== 0) {
-			return diff;
-		}
+		if (diff !== 0) return diff;
 	}
 
 	return 0;
@@ -68,9 +60,7 @@ function shellQuote(value) {
 function stageChangedFiles() {
 	const output = run("git ls-files -m -o -d --exclude-standard", { silent: true });
 	const paths = [...new Set((output || "").split("\n").map((line) => line.trim()).filter(Boolean))];
-	if (paths.length === 0) {
-		return;
-	}
+	if (paths.length === 0) return;
 
 	run(`git add -- ${paths.map(shellQuote).join(" ")}`);
 }
@@ -98,54 +88,26 @@ function bumpOrSetVersion(target) {
 
 function getChangelogs() {
 	const packagesDir = "packages";
-	const packages = readdirSync(packagesDir);
-	return packages
+	return readdirSync(packagesDir)
 		.map((pkg) => join(packagesDir, pkg, "CHANGELOG.md"))
 		.filter((path) => existsSync(path));
 }
 
-function updateChangelogsForRelease(version) {
-	const date = new Date().toISOString().split("T")[0];
-	const changelogs = getChangelogs();
-
-	for (const changelog of changelogs) {
-		const content = readFileSync(changelog, "utf-8");
-
-		if (!content.includes("## [Unreleased]")) {
-			console.log(`  Skipping ${changelog}: no [Unreleased] section`);
-			continue;
-		}
-
-		const updated = content.replace(
-			"## [Unreleased]",
-			`## [${version}] - ${date}`
-		);
-		writeFileSync(changelog, updated);
-		console.log(`  Updated ${changelog}`);
+function finalizeChangelog(changelog, version, date) {
+	const content = readFileSync(changelog, "utf-8");
+	if (!content.includes("## [Unreleased]")) {
+		console.log(`  Skipping ${changelog}: no [Unreleased] section`);
+		return;
 	}
+
+	const released = content.replace("## [Unreleased]", `## [${version}] - ${date}`);
+	const withNextUnreleased = released.replace(/^(# Changelog\n\n)/, "$1## [Unreleased]\n\n");
+	writeFileSync(changelog, withNextUnreleased);
+	console.log(`  Finalized ${changelog}`);
 }
 
-function addUnreleasedSection() {
-	const changelogs = getChangelogs();
-	const unreleasedSection = "## [Unreleased]\n\n";
+console.log("\n=== Prepare Shibui Release ===\n");
 
-	for (const changelog of changelogs) {
-		const content = readFileSync(changelog, "utf-8");
-
-		// Insert after "# Changelog\n\n"
-		const updated = content.replace(
-			/^(# Changelog\n\n)/,
-			`$1${unreleasedSection}`
-		);
-		writeFileSync(changelog, updated);
-		console.log(`  Added [Unreleased] to ${changelog}`);
-	}
-}
-
-// Main flow
-console.log("\n=== Release Script ===\n");
-
-// 1. Check for uncommitted changes
 console.log("Checking for uncommitted changes...");
 const status = run("git status --porcelain", { silent: true });
 if (status && status.trim()) {
@@ -155,42 +117,20 @@ if (status && status.trim()) {
 }
 console.log("  Working directory clean\n");
 
-// 2. Bump or set version
 const version = bumpOrSetVersion(RELEASE_TARGET);
 console.log(`  New version: ${version}\n`);
 
-// 3. Update changelogs
 console.log("Updating CHANGELOG.md files...");
-updateChangelogsForRelease(version);
+const date = new Date().toISOString().split("T")[0];
+for (const changelog of getChangelogs()) {
+	finalizeChangelog(changelog, version, date);
+}
 console.log();
 
-// 4. Commit and tag
 console.log("Committing and tagging...");
 stageChangedFiles();
 run(`git commit -m "Release v${version}"`);
 run(`git tag v${version}`);
 console.log();
 
-// 5. Publish
-console.log("Publishing to npm...");
-run("npm run publish");
-console.log();
-
-// 6. Add new [Unreleased] sections
-console.log("Adding [Unreleased] sections for next cycle...");
-addUnreleasedSection();
-console.log();
-
-// 7. Commit
-console.log("Committing changelog updates...");
-stageChangedFiles();
-run(`git commit -m "Add [Unreleased] section for next cycle"`);
-console.log();
-
-// 8. Push
-console.log("Pushing to remote...");
-run("git push origin main");
-run(`git push origin v${version}`);
-console.log();
-
-console.log(`=== Released v${version} ===`);
+console.log(`=== Prepared v${version} ===`);

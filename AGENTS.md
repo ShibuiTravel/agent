@@ -185,13 +185,22 @@ Create provider file exporting:
 
 1. **Update CHANGELOGs**: Ensure all changes since last release are documented in the `[Unreleased]` section of each affected package's CHANGELOG.md
 
-2. **Run release script**:
+2. **Use the Shibui release workflow**:
+   - Run `.github/workflows/release-shibui.yml` from GitHub Actions
+   - Use `patch`, `minor`, `major`, or an explicit `x.y.z`
+   - Keep Docker publishing enabled for normal releases
+
+The workflow handles: version bump, CHANGELOG finalization, release commit, tag, npm publish, Docker publish, and GitHub Release creation.
+
+3. **Local preparation only**:
    ```bash
-   npm run release:patch    # Fixes and additions
-   npm run release:minor    # API breaking changes
+   npm run release:patch    # Prepares a local release commit and tag only
+   npm run release:minor    # Prepares a local release commit and tag only
    ```
 
-The script handles: version bump, CHANGELOG finalization, commit, tag, publish, and adding new `[Unreleased]` sections.
+The local script does not publish, push, or create a GitHub Release.
+
+See `docs/maintainers/release.md` for the full release and upstream-sync runbook.
 
 ## **CRITICAL** Git Rules for Parallel Agents **CRITICAL**
 

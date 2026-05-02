@@ -1,12 +1,10 @@
 name: Publish npm Package
 
 on:
-  release:
-    types: [published]
   workflow_dispatch:
     inputs:
       ref:
-        description: "Git ref to publish, usually a v* tag"
+        description: "Git ref to publish, usually a v* tag. Official releases call this from release-shibui.yml."
         required: true
         type: string
 
@@ -15,7 +13,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: publish-npm-${{ github.event.release.tag_name || inputs.ref || github.ref }}
+  group: publish-npm-${{ inputs.ref || github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -26,11 +24,7 @@ jobs:
       - name: Resolve publish ref
         id: publish-ref
         run: |
-          if [ "${{ github.event_name }}" = "release" ]; then
-            echo "ref=${{ github.event.release.tag_name }}" >> "$GITHUB_OUTPUT"
-          else
-            echo "ref=${{ inputs.ref }}" >> "$GITHUB_OUTPUT"
-          fi
+          echo "ref=${{ inputs.ref }}" >> "$GITHUB_OUTPUT"
 
       - name: Checkout
         uses: actions/checkout@v4

@@ -1,0 +1,196 @@
+name: Release Shibui
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release target: patch, minor, major, or explicit x.y.z"
+        required: true
+        type: string
+      publish_docker:
+        description: "Publish Docker images after npm succeeds"
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  actions: write
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+concurrency:
+  group: release-shibui
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: ${{ github.repository == 'ShibuiTravel/agent' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      - name: Use npm 11
+        run: npm install -g npm@11
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify release branch
+        run: |
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "Releases must run from main. Current ref: $GITHUB_REF"
+            exit 1
+          fi
+
+          git fetch origin main --tags
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
+
+      - name: Resolve release version
+        id: version
+        run: node scripts/verify-release-version.mjs "${{ inputs.version }}"
+
+      - name: Preflight release uniqueness
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_VERSION: ${{ steps.version.outputs.release_version }}
+          RELEASE_TAG: ${{ steps.version.outputs.release_tag }}
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "Tag $RELEASE_TAG already exists."
+            exit 1
+          fi
+
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "GitHub Release $RELEASE_TAG already exists."
+            exit 1
+          fi
+
+          if npm view "@shibuitravel/agent@$RELEASE_VERSION" version >/dev/null 2>&1; then
+            echo "@shibuitravel/agent@$RELEASE_VERSION is already published."
+            exit 1
+          fi
+
+          if docker manifest inspect "docker.io/shibuitravel/agent:$RELEASE_VERSION" >/dev/null 2>&1; then
+            echo "docker.io/shibuitravel/agent:$RELEASE_VERSION already exists."
+            exit 1
+          fi
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Prepare release commit and tag
+        run: node scripts/release.mjs "${{ inputs.version }}"
+
+      - name: Build
+        run: npm run build
+
+      - name: Check
+        run: npm run check
+
+      - name: Test
+        run: npm test
+
+      - name: Verify release worktree is clean
+        run: |
+          git diff --exit-code
+          git diff --cached --exit-code
+
+      - name: Capture release commit
+        id: commit
+        run: |
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Extract release notes
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.release_version }}
+        run: |
+          awk "/^## \\[${RELEASE_VERSION}\\]/{flag=1; next} /^## \\[/{flag=0} flag" \
+            packages/coding-agent/CHANGELOG.md > /tmp/release-notes.md
+
+          if [ ! -s /tmp/release-notes.md ]; then
+            echo "Release ${RELEASE_VERSION}" > /tmp/release-notes.md
+          fi
+
+      - name: Push release commit and tag
+        env:
+          RELEASE_TAG: ${{ steps.version.outputs.release_tag }}
+        run: |
+          git push origin HEAD:main
+          git push origin "$RELEASE_TAG"
+
+      - name: Publish npm package
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.version.outputs.release_tag }}
+          RELEASE_SHA: ${{ steps.commit.outputs.sha }}
+        run: |
+          gh workflow run publish-npm.yml --ref "$RELEASE_TAG" -f "ref=$RELEASE_TAG"
+          sleep 10
+
+          for _ in $(seq 1 30); do
+            run_id=$(gh run list \
+              --workflow publish-npm.yml \
+              --event workflow_dispatch \
+              --limit 10 \
+              --json databaseId,headSha \
+              --jq ".[] | select(.headSha == \"$RELEASE_SHA\") | .databaseId" | head -n 1)
+            if [ -n "$run_id" ]; then
+              gh run watch "$run_id" --exit-status
+              exit 0
+            fi
+            sleep 5
+          done
+
+          echo "Timed out waiting for publish-npm.yml to start."
+          exit 1
+
+      - name: Publish Docker images
+        if: ${{ inputs.publish_docker }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.version.outputs.release_tag }}
+          RELEASE_SHA: ${{ steps.commit.outputs.sha }}
+        run: |
+          gh workflow run publish-docker.yml --ref "$RELEASE_TAG" -f "ref=$RELEASE_TAG"
+          sleep 10
+
+          for _ in $(seq 1 30); do
+            run_id=$(gh run list \
+              --workflow publish-docker.yml \
+              --event workflow_dispatch \
+              --limit 10 \
+              --json databaseId,headSha \
+              --jq ".[] | select(.headSha == \"$RELEASE_SHA\") | .databaseId" | head -n 1)
+            if [ -n "$run_id" ]; then
+              gh run watch "$run_id" --exit-status
+              exit 0
+            fi
+            sleep 5
+          done
+
+          echo "Timed out waiting for publish-docker.yml to start."
+          exit 1
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.version.outputs.release_tag }}
+        run: |
+          gh release create "$RELEASE_TAG" \
+            --title "$RELEASE_TAG" \
+            --notes-file /tmp/release-notes.md \
+            --target "${{ steps.commit.outputs.sha }}"
