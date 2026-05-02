@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.72.1] - 2026-05-02
+
+### Added
+
+- Added GitHub Actions trusted publishing for the `@shibuitravel/agent` npm package.
+
 ### Changed
 
 - Rebranded the coding-agent CLI package for Shibui with the `shibui` binary, `@shibuitravel/agent` package name, and `~/.shibui/agent` config root.

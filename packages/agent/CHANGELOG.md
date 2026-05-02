@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.72.1] - 2026-05-02
+
 ### Changed
 
 - Changed the default agent transport to `auto` so providers can use their best available transport by default ([#4083](https://github.com/badlogic/pi-mono/issues/4083)).
