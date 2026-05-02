@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.72.2] - 2026-05-02
+
+### Fixed
+
+- Fixed Shibui release validation to use the branded `.shibui` project config directory and `SHIBUI_*` environment variables in package, settings, and resource discovery coverage.
+
 ## [0.72.1] - 2026-05-02
 
 ### Added

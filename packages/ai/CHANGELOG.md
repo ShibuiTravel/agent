@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.72.2] - 2026-05-02
+
 ### Fixed
 
 - Fixed Bedrock adaptive thinking so Claude Opus 4.7 application inference profile names map `xhigh` reasoning to `effort: "xhigh"` even when the base profile model metadata came from Claude Opus 4.6.
