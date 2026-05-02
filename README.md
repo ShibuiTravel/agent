@@ -22,6 +22,24 @@ shibui
 
 Choose **Use a subscription** to connect an inherited subscription provider such as Anthropic Claude Pro/Max, ChatGPT Plus/Pro, or GitHub Copilot. Choose **Use an API Key** if you prefer to configure provider API credentials directly.
 
+## Docker
+
+Run Shibui from the published container image:
+
+```bash
+docker run --rm -it ghcr.io/shibuitravel/agent --version
+```
+
+Run it against the current project and persist Shibui config on the host:
+
+```bash
+docker run --rm -it \
+  -v "$PWD:/workspace" \
+  -w /workspace \
+  -v "$HOME/.shibui:/home/shibui/.shibui" \
+  ghcr.io/shibuitravel/agent
+```
+
 ## Development
 
 ```bash
